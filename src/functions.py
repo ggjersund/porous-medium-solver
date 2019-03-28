@@ -14,7 +14,7 @@ def plot_solution(x, t, U, txt='Solution', azim=75):
     fig = plt.figure()
     plt.clf()
     ax = fig.gca(projection='3d')
-    X, T = np.meshgrid(t, x)
+    T, X = np.meshgrid(t, x)
     ax.plot_wireframe(T, X, U)
     ax.plot_surface(T, X, U, cmap=cm.coolwarm)
     ax.view_init(azim=azim)

@@ -29,5 +29,5 @@ if __name__ == "__main__":
     x1, t1, U1, h1, k1 = porous_forward.forward_euler()
     x2, t2, U2, h2, k2 = porous_backward.backward_euler()
 
-    plot_solution(x1, t1, U1, txt='Solution', azim=75)
-    plot_solution(x2, t2, U2, txt='Solution', azim=75)
+    plot_solution(x1, t1, U1, txt='Forward-Euler', azim=-20)
+    plot_solution(x2, t2, U2, txt='Backward-Euler', azim=-20)
