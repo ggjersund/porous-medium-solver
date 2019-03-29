@@ -62,7 +62,7 @@ class PorousMediumEquation(object):
         self.U = np.zeros((self.M+1, self.N+1))
 
         # Check CFL condition (more strict that usual 1/2)
-        if ((self.k * np.amax(self.f(self.x))**(self.m) / self.h**2) >= (1/2)):
+        if ((int(np.ceil(4*self.M**2*(self.T_high - self.T_low)/((self.X_high - self.X_low)**2)) * np.amax(self.f(self.x))** self.m)) >= self.N):
             raise ValueError("CFL condition not satisfied for Forward-Euler method.")
 
         # Set initial conditions
@@ -108,3 +108,19 @@ class PorousMediumEquation(object):
             self.U[-1, n+1] = b[-1]
 
         return self.x, self.t, self.U, self.h, self.k
+
+    def forward_euler_convergence_space(self):
+        for i in range(0, 8):
+            pass
+
+    def forward_euler_convergence_time(self):
+        for i in range(0, 8):
+            pass
+
+    def backward_euler_convergence_space(self):
+        for i in range(0, 8):
+            pass
+
+    def backward_euler_convergence_time(self):
+        for i in range(0, 8):
+            pass
