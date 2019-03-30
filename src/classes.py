@@ -1,4 +1,5 @@
 import numpy as np
+import time
 from scipy import signal
 from scipy.optimize import fsolve
 
@@ -45,7 +46,6 @@ class PorousMediumEquation(object):
 
     @staticmethod
     def tridiag(a, b, c, N):
-        # Create tri-diagonal matrix
         e = np.ones(N)
         A = a*np.diag(e[1:], -1) + b*np.diag(e) + c*np.diag(e[1:], 1)
         return A
@@ -127,15 +127,18 @@ class PorousMediumEquation(object):
     def forward_euler_convergence_space(self, analytic):
         old_N = self.N
         old_M = self.M
-        self.change_N(10000)
+        self.change_N(20000)
 
         h_vector = np.zeros(10)
         L1 = np.zeros(10)
         L2 = np.zeros(10)
         Linf = np.zeros(10)
 
+        start_t = time.time()
+        print("Forward-Euler Convergence in space calculation starting at t = 0")
+
         for i in range(0, 10):
-            self.change_M(30 + (20 * i))
+            self.change_M(30 + (30 * i))
 
             x, t, U, h, k = self.forward_euler()
 
@@ -143,13 +146,16 @@ class PorousMediumEquation(object):
             u = np.transpose(analytic(X, T))
 
             h_vector[i] = h
-
-            # Calculate error norms
             L1[i] = np.sum(np.abs(U - u)) * h * k
             L2[i] = np.sqrt(np.sum(abs(U - u)**2) * h * k)
             Linf[i] = np.amax(abs(U - u))
 
-            print("Iteration:", i+1, "M:", self.M, "N:", self.N, "U max", np.amax(U), "u max", np.amax(u), "L1:", L1[i], "L2:", L2[i], "Linf:", Linf[i])
+            print("Iteration:", i+1, "\tM:", self.M, "N:", self.N, "L1:", L1[i], "L2:", L2[i], "Linf:", Linf[i])
+
+        print("Order estimation for Forward-Euler (L1):", np.polyfit(np.log(h_vector), np.log(L1), 1)[0])
+        print("Order estimation for Forward-Euler (L2):", np.polyfit(np.log(h_vector), np.log(L2), 1)[0])
+        print("Order estimation for Forward-Euler (Linf):", np.polyfit(np.log(h_vector), np.log(Linf), 1)[0])
+        print("Forward-Euler Convergence in space calculation used t =", time.time() - start_t, "seconds")
 
         # Change back
         self.change_M(old_M)
@@ -158,13 +164,119 @@ class PorousMediumEquation(object):
         return h_vector, L1, L2, Linf
 
     def forward_euler_convergence_time(self, analytic):
-        for i in range(0, 8):
-            pass
+        old_N = self.N
+        old_M = self.M
+        self.change_M(300)
+
+        k_vector = np.zeros(10)
+        L1 = np.zeros(10)
+        L2 = np.zeros(10)
+        Linf = np.zeros(10)
+
+        start_t = time.time()
+        print("Forward-Euler Convergence in time calculation starting at t = 0")
+
+        for i in range(0, 10):
+            self.change_N(5000 + (400 * i))
+
+            x, t, U, h, k = self.forward_euler()
+
+            X, T = np.meshgrid(x, t)
+            u = np.transpose(analytic(X, T))
+
+            k_vector[i] = k
+            L1[i] = np.sum(np.abs(U - u)) * h * k
+            L2[i] = np.sqrt(np.sum(abs(U - u)**2) * h * k)
+            Linf[i] = np.amax(abs(U - u))
+
+            print("Iteration:", i+1, "\tM:", self.M, "N:", self.N, "L1:", L1[i], "L2:", L2[i], "Linf:", Linf[i])
+
+        print("Order estimation for Forward-Euler (L1):", np.polyfit(np.log(k_vector), np.log(L1), 1)[0])
+        print("Order estimation for Forward-Euler (L2):", np.polyfit(np.log(k_vector), np.log(L2), 1)[0])
+        print("Order estimation for Forward-Euler (Linf):", np.polyfit(np.log(k_vector), np.log(Linf), 1)[0])
+        print("Forward-Euler Convergence in time calculation used t =", time.time() - start_t, "seconds")
+
+        # Change back
+        self.change_M(old_M)
+        self.change_N(old_N)
+
+        return k_vector, L1, L2, Linf
 
     def backward_euler_convergence_space(self, analytic):
-        for i in range(0, 8):
-            pass
+        iterations = 20
+        old_N = self.N
+        old_M = self.M
+        self.change_N(600)
+
+        h_vector = np.zeros(iterations)
+        L1 = np.zeros(iterations)
+        L2 = np.zeros(iterations)
+        Linf = np.zeros(iterations)
+
+        start_t = time.time()
+        print("Backward-Euler Convergence in space calculation starting at t = 0")
+
+        for i in range(0, iterations):
+            self.change_M(40 + (3 * i))
+
+            x, t, U, h, k = self.backward_euler()
+
+            X, T = np.meshgrid(x, t)
+            u = np.transpose(analytic(X, T))
+
+            h_vector[i] = h
+            L1[i] = np.sum(np.abs(U - u)) * h * k
+            L2[i] = np.sqrt(np.sum(abs(U - u)**2) * h * k)
+            Linf[i] = np.amax(abs(U - u))
+
+            print("Iteration:", i+1, "\tM:", self.M, "N:", self.N, "L1:", L1[i], "L2:", L2[i], "Linf:", Linf[i])
+
+        print("Order estimation for Backward Euler (L1):", np.polyfit(np.log(h_vector), np.log(L1), 1)[0])
+        print("Order estimation for Backward Euler (L2):", np.polyfit(np.log(h_vector), np.log(L2), 1)[0])
+        print("Order estimation for Backward Euler (Linf):", np.polyfit(np.log(h_vector), np.log(Linf), 1)[0])
+        print("Backward-Euler Convergence in space calculation used t =", time.time() - start_t, "seconds")
+
+        # Change back
+        self.change_M(old_M)
+        self.change_N(old_N)
+
+        return h_vector, L1, L2, Linf
 
     def backward_euler_convergence_time(self, analytic):
-        for i in range(0, 8):
-            pass
+        old_N = self.N
+        old_M = self.M
+        self.change_M(200)
+
+        k_vector = np.zeros(10)
+        L1 = np.zeros(10)
+        L2 = np.zeros(10)
+        Linf = np.zeros(10)
+
+        start_t = time.time()
+        print("Backward-Euler Convergence in time calculation starting at t = 0")
+
+        for i in range(0, 10):
+            self.change_N(40 + (5 * i))
+
+            x, t, U, h, k = self.backward_euler()
+
+            X, T = np.meshgrid(x, t)
+            u = np.transpose(analytic(X, T))
+
+            k_vector[i] = k
+            L1[i] = np.sum(np.abs(U - u)) * h * k
+            L2[i] = np.sqrt(np.sum(abs(U - u)**2) * h * k)
+            Linf[i] = np.amax(abs(U - u))
+
+            print("Iteration:", i+1, "\tM:", self.M, "N:", self.N, "L1:", L1[i], "L2:", L2[i], "Linf:", Linf[i])
+
+        print("Order estimation for Backward-Euler (L1):", np.polyfit(np.log(k_vector), np.log(L1), 1)[0])
+        print("Order estimation for Backward-Euler (L2):", np.polyfit(np.log(k_vector), np.log(L2), 1)[0])
+        print("Order estimation for Backward-Euler (Linf):", np.polyfit(np.log(k_vector), np.log(Linf), 1)[0])
+        print("Backward-Euler Convergence in time calculation used t =", time.time() - start_t, "seconds")
+
+        # Change back
+        self.change_M(old_M)
+        self.change_N(old_N)
+
+        return k_vector, L1, L2, Linf
