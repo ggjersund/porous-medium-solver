@@ -31,4 +31,5 @@ def plot_convergence(x=np.array([]), e=np.array([]), labels=np.array([]), xlabel
     plt.ylabel(ylabel)
     plt.title(txt)
     plt.legend()
+    plt.grid()
     plt.show()

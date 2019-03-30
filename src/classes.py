@@ -88,12 +88,17 @@ class PorousMediumEquation(object):
         A = self.tridiag(1, -2, 1, self.M-1)
         b = np.zeros(self.M-1)
 
+        start_t = time.time()
+        print("Forward-Euler calculation starting")
+
         for n in range(self.N):
             b[0] = self.g1(self.t[n])
             b[-1] = self.g2(self.t[n])
             self.U[1:-1, n+1] = self.U[1:-1, n] + (self.r * np.dot(A, self.U[1:-1, n]**(self.m+1))) + (self.r * b**(self.m+1))
             self.U[0, n+1] = b[0]
             self.U[-1, n+1] = b[-1]
+
+        print("Forward-Euler calculation used t =", time.time() - start_t, "seconds for N:", self.N, "and M:", self.M)
 
         return self.x, self.t, self.U, self.h, self.k
 
@@ -110,6 +115,9 @@ class PorousMediumEquation(object):
         A = self.tridiag(1, -2, 1, self.M-1)
         b = np.zeros(self.M-1)
 
+        start_t = time.time()
+        print("Backward-Euler calculation starting")
+
         for n in range(self.N):
             b[0] = self.g1(self.t[n])
             b[-1] = self.g2(self.t[n])
@@ -122,22 +130,25 @@ class PorousMediumEquation(object):
             self.U[0, n+1] = b[0]
             self.U[-1, n+1] = b[-1]
 
+        print("Backward-Euler calculation used t =", time.time() - start_t, "seconds for N:", self.N, "and M:", self.M)
+
         return self.x, self.t, self.U, self.h, self.k
 
     def forward_euler_convergence_space(self, analytic):
+        iterations = 6
         old_N = self.N
         old_M = self.M
-        self.change_N(20000)
+        self.change_N(30000)
 
-        h_vector = np.zeros(10)
-        L1 = np.zeros(10)
-        L2 = np.zeros(10)
-        Linf = np.zeros(10)
+        h_vector = np.zeros(iterations)
+        L1 = np.zeros(iterations)
+        L2 = np.zeros(iterations)
+        Linf = np.zeros(iterations)
 
         start_t = time.time()
         print("Forward-Euler Convergence in space calculation starting at t = 0")
 
-        for i in range(0, 10):
+        for i in range(0, iterations):
             self.change_M(30 + (30 * i))
 
             x, t, U, h, k = self.forward_euler()
@@ -166,7 +177,7 @@ class PorousMediumEquation(object):
     def forward_euler_convergence_time(self, analytic):
         old_N = self.N
         old_M = self.M
-        self.change_M(300)
+        self.change_M(100)
 
         k_vector = np.zeros(10)
         L1 = np.zeros(10)
@@ -203,10 +214,10 @@ class PorousMediumEquation(object):
         return k_vector, L1, L2, Linf
 
     def backward_euler_convergence_space(self, analytic):
-        iterations = 20
+        iterations = 6
         old_N = self.N
         old_M = self.M
-        self.change_N(600)
+        self.change_N(4000)
 
         h_vector = np.zeros(iterations)
         L1 = np.zeros(iterations)
@@ -217,7 +228,7 @@ class PorousMediumEquation(object):
         print("Backward-Euler Convergence in space calculation starting at t = 0")
 
         for i in range(0, iterations):
-            self.change_M(40 + (3 * i))
+            self.change_M(25 + (25 * i))
 
             x, t, U, h, k = self.backward_euler()
 
@@ -243,20 +254,21 @@ class PorousMediumEquation(object):
         return h_vector, L1, L2, Linf
 
     def backward_euler_convergence_time(self, analytic):
+        iterations = 6
         old_N = self.N
         old_M = self.M
-        self.change_M(200)
+        self.change_M(300)
 
-        k_vector = np.zeros(10)
-        L1 = np.zeros(10)
-        L2 = np.zeros(10)
-        Linf = np.zeros(10)
+        k_vector = np.zeros(iterations)
+        L1 = np.zeros(iterations)
+        L2 = np.zeros(iterations)
+        Linf = np.zeros(iterations)
 
         start_t = time.time()
         print("Backward-Euler Convergence in time calculation starting at t = 0")
 
-        for i in range(0, 10):
-            self.change_N(40 + (5 * i))
+        for i in range(0, iterations):
+            self.change_N(50 + (50 * i))
 
             x, t, U, h, k = self.backward_euler()
 

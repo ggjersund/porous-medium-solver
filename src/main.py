@@ -28,10 +28,15 @@ if __name__ == "__main__":
             f[i] -= np.exp((-1 / (1 - abs(x[i]) ** 2)))
         return f
 
-    def initial(x):
+    def initial1(x):
         #return molli1(x)
         #return molli2(x)
         return barenblatt(x, t=0.01, g=2, n=1)
+
+    def initial2(x):
+        #return molli1(x)
+        #return molli2(x)
+        return barenblatt(x, t=0.5, g=2, n=1)
 
     def analytic(x, t):
         return barenblatt(x, t, g=2, n=1)
@@ -42,8 +47,8 @@ if __name__ == "__main__":
     def boundary2(t):
         return (t-t) + 0
 
-    porous_forward = PorousMediumEquation(m=1, f=initial, g1=boundary1, g2=boundary2, M=90, N=5000, T_low=0.01, T_high=2, X_low=-8, X_high=8)
-    porous_backward = PorousMediumEquation(m=1, f=initial, g1=boundary1, g2=boundary2, M=200, N=900, T_low=0.01, T_high=2, X_low=-8, X_high=8)
+    porous_forward = PorousMediumEquation(m=1, f=initial1, g1=boundary1, g2=boundary2, M=90, N=5000, T_low=0.01, T_high=2.01, X_low=-8, X_high=8)
+    porous_backward = PorousMediumEquation(m=1, f=initial1, g1=boundary1, g2=boundary2, M=200, N=400, T_low=0.01, T_high=2.01, X_low=-8, X_high=8)
     #porous_forward.add_impulse(index=54, ratio=0.75)
 
     x1, t1, U1, h1, k1 = porous_forward.forward_euler()
@@ -63,43 +68,39 @@ if __name__ == "__main__":
     """
     Forward-Euler convergence plots
     """
+    porous_forward = PorousMediumEquation(m=1, f=initial2, g1=boundary1, g2=boundary2, M=90, N=5000, T_low=0.5, T_high=2.5, X_low=-8, X_high=8)
+
     h_vector, L1, L2, Linf = porous_forward.forward_euler_convergence_space(analytic)
     plot_convergence(
-        x=np.array([h_vector, h_vector, h_vector]),
-        e=np.array([L1, L2, Linf]),
-        labels=np.array(['L1', 'L2', 'Linf']),
-        xlabel='h',
-        ylabel='e',
+        x=np.array([h_vector]),
+        e=np.array([L1]),
+        labels=np.array([r"$||e||_{L^1}$"]),
+        xlabel=r"$h$",
+        ylabel=r"$||e||$",
         txt='Forward-Euler space convergence'
-    )
-    k_vector, L1, L2, Linf = porous_forward.forward_euler_convergence_time(analytic)
-    plot_convergence(
-        x=np.array([k_vector, k_vector, k_vector]),
-        e=np.array([L1, L2, Linf]),
-        labels=np.array(['L1', 'L2', 'Linf']),
-        xlabel='k',
-        ylabel='e',
-        txt='Forward-Euler time convergence'
     )
 
     """
     Backward-Euler convergence plots
     """
+    porous_backward = PorousMediumEquation(m=1, f=initial2, g1=boundary1, g2=boundary2, M=200, N=900, T_low=0.5, T_high=2.5, X_low=-8, X_high=8)
+
     h_vector, L1, L2, Linf = porous_backward.backward_euler_convergence_space(analytic)
     plot_convergence(
-        x=np.array([h_vector, h_vector, h_vector]),
-        e=np.array([L1, L2, Linf]),
-        labels=np.array(['L1', 'L2', 'Linf']),
-        xlabel='h',
-        ylabel='e',
+        x=np.array([h_vector]),
+        e=np.array([L1]),
+        labels=np.array([r"$||e||_{L^1}$"]),
+        xlabel=r"$h$",
+        ylabel=r"$||e||$",
         txt='Backward-Euler space convergence'
     )
+
     k_vector, L1, L2, Linf = porous_backward.backward_euler_convergence_time(analytic)
     plot_convergence(
-        x=np.array([k_vector, k_vector, k_vector]),
-        e=np.array([L1, L2, Linf]),
-        labels=np.array(['L1', 'L2', 'Linf']),
-        xlabel='k',
-        ylabel='e',
+        x=np.array([k_vector]),
+        e=np.array([L1]),
+        labels=np.array([r"$||e||_{L^1}$"]),
+        xlabel=r"$k$",
+        ylabel=r"$||e||$",
         txt='Backward-Euler time convergence'
     )
