@@ -71,7 +71,7 @@ class PorousMediumEquation(object):
         if index < (self.M + 1):
             self.impulses[:] += signal.unit_impulse(self.M+1, index) * ratio
 
-    def forward_euler(self):
+    def forward_euler(self, neumann=False):
 
         # Reset solution grid
         self.U = np.zeros((self.M+1, self.N+1))
@@ -85,24 +85,35 @@ class PorousMediumEquation(object):
         self.U[:, 0] += self.f(self.x)
 
         # Generate A matrix and b vector
-        A = self.tridiag(1, -2, 1, self.M-1)
+        if neumann == True:
+            A = self.tridiag(1, -2, 1, self.M+1)
+        else:
+            A = self.tridiag(1, -2, 1, self.M-1)
+
         b = np.zeros(self.M-1)
+        nv = np.zeros(self.M+1)
 
         start_t = time.time()
         print("Forward-Euler calculation starting")
 
         for n in range(self.N):
-            b[0] = self.g1(self.t[n])
-            b[-1] = self.g2(self.t[n])
-            self.U[1:-1, n+1] = self.U[1:-1, n] + (self.r * np.dot(A, self.U[1:-1, n]**(self.m+1))) + (self.r * b**(self.m+1))
-            self.U[0, n+1] = b[0]
-            self.U[-1, n+1] = b[-1]
+
+            if neumann == False:
+                b[0] = self.g1(self.t[n])
+                b[-1] = self.g2(self.t[n])
+                self.U[1:-1, n+1] = self.U[1:-1, n] + (self.r * np.dot(A, self.U[1:-1, n]**(self.m+1))) + (self.r * b**(self.m+1))
+                self.U[0, n+1] = b[0]
+                self.U[-1, n+1] = b[-1]
+            else:
+                nv[0] = 2 * self.h * self.g1(self.t[n]) + self.U[1, n]
+                nv[-1] = 2 * self.h * self.g2(self.t[n]) + self.U[-2, n]
+                self.U[:, n+1] = self.U[:, n] + (self.r * np.dot(A, self.U[:, n]**(self.m+1))) + (self.r * nv**(self.m+1))
 
         print("Forward-Euler calculation used t =", time.time() - start_t, "seconds for N:", self.N, "and M:", self.M)
 
         return self.x, self.t, self.U, self.h, self.k
 
-    def backward_euler(self):
+    def backward_euler(self, neumann=False):
 
         # Reset solution grid
         self.U = np.zeros((self.M+1, self.N+1))
@@ -112,7 +123,10 @@ class PorousMediumEquation(object):
         self.U[:, 0] += self.f(self.x)
 
         # Generate A matrix and b vector
-        A = self.tridiag(1, -2, 1, self.M-1)
+        if neumann == True:
+            A = self.tridiag(1, -2, 1, self.M+1)
+        else:
+            A = self.tridiag(1, -2, 1, self.M-1)
         b = np.zeros(self.M-1)
 
         start_t = time.time()
@@ -122,13 +136,28 @@ class PorousMediumEquation(object):
             b[0] = self.g1(self.t[n])
             b[-1] = self.g2(self.t[n])
 
+            def G(u, t):
+                nv = np.zeros(self.M+1)
+                if neumann == True:
+                    nv[0] = 2 * self.h * self.g1(t) + u[1]
+                    nv[-1] = 2 * self.h * self.g2(t) + u[-2]
+                return nv
+
             def F(u):
                 g = self.m + 1
-                return u - (self.r * np.dot(A, u ** g)) - self.U[1:-1, n] - (self.r * b ** g)
+                if neumann == True:
+                    return u - (self.r * np.dot(A, u ** g)) - self.U[:, n] - (self.r * G(u, self.t[n+1]) ** g)
+                else:
+                    return u - (self.r * np.dot(A, u ** g)) - self.U[1:-1, n] - (self.r * b ** g)
 
-            self.U[1:-1, n+1] = fsolve(F, self.U[1:-1, n])
-            self.U[0, n+1] = b[0]
-            self.U[-1, n+1] = b[-1]
+            if neumann == True:
+                self.U[:, n+1] = fsolve(F, self.U[:, n])
+            else:
+                self.U[1:-1, n+1] = fsolve(F, self.U[1:-1, n])
+
+            if neumann == False:
+                self.U[0, n+1] = b[0]
+                self.U[-1, n+1] = b[-1]
 
         print("Backward-Euler calculation used t =", time.time() - start_t, "seconds for N:", self.N, "and M:", self.M)
 
