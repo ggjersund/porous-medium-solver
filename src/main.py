@@ -38,6 +38,9 @@ if __name__ == "__main__":
         #return molli2(x)
         return barenblatt(x, t=0.5, g=2, n=1)
 
+    def initial3(x):
+        return molli2(x)
+
     def analytic(x, t):
         return barenblatt(x, t, g=2, n=1)
 
@@ -47,12 +50,23 @@ if __name__ == "__main__":
     def boundary2(t):
         return (t-t) + 0
 
+    def boundary11(t):
+        return (t-t) + 1
+
+    def boundary22(t):
+        return (t-t) + 1
+
+    def boundary111(t):
+        return (t-t) - 1/8
+
+    def boundary222(t):
+        return (t-t) + 1/8
+
     """
     Dirichlet boundary conditions
     """
     porous_forward = PorousMediumEquation(m=1, f=initial1, g1=boundary1, g2=boundary2, M=90, N=5000, T_low=0.01, T_high=2.01, X_low=-8, X_high=8)
     porous_backward = PorousMediumEquation(m=1, f=initial1, g1=boundary1, g2=boundary2, M=200, N=400, T_low=0.01, T_high=2.01, X_low=-8, X_high=8)
-    #porous_forward.add_impulse(index=54, ratio=0.75)
 
     x1, t1, U1, h1, k1 = porous_forward.forward_euler()
     x2, t2, U2, h2, k2 = porous_backward.backward_euler()
@@ -69,6 +83,18 @@ if __name__ == "__main__":
     plot_solution(x2, t2, U2 - u2, txt='Backward-Euler error', azim=-30)
 
     """
+    Dirichlet with mollification as initial condition
+    """
+    porous_forward = PorousMediumEquation(m=1, f=initial3, g1=boundary11, g2=boundary22, M=90, N=5000, T_low=0.01, T_high=2.01, X_low=-8, X_high=8)
+    porous_backward = PorousMediumEquation(m=1, f=initial3, g1=boundary11, g2=boundary22, M=200, N=400, T_low=0.01, T_high=2.01, X_low=-8, X_high=8)
+
+    x1, t1, U1, h1, k1 = porous_forward.forward_euler()
+    x2, t2, U2, h2, k2 = porous_backward.backward_euler()
+
+    plot_solution(x1, t1, U1, txt='Forward-Euler solution', azim=-30)
+    plot_solution(x2, t2, U2, txt='Backward-Euler solution', azim=-30)
+
+    """
     Von-Neumann boundary conditions
     """
     porous_forward = PorousMediumEquation(m=1, f=initial1, g1=boundary1, g2=boundary2, M=90, N=20000, T_low=0.01, T_high=2.01, X_low=-2, X_high=2)
@@ -76,6 +102,23 @@ if __name__ == "__main__":
     plot_solution(x2, t2, U2, txt='Forward-Euler with Neumann boundary conditions', azim=-30)
 
     porous_backward = PorousMediumEquation(m=1, f=initial1, g1=boundary1, g2=boundary2, M=100, N=700, T_low=0.01, T_high=2.01, X_low=-2, X_high=2)
+    x2, t2, U2, h2, k2 = porous_backward.backward_euler(neumann=True)
+    plot_solution(x2, t2, U2, txt='Backward-Euler with Neumann boundary conditions', azim=-30)
+
+    """
+    Von-Neumann boundary conditions with impulses
+    """
+    porous_forward = PorousMediumEquation(m=1, f=initial3, g1=boundary111, g2=boundary222, M=90, N=20000, T_low=0.01, T_high=2.01, X_low=-2, X_high=2)
+    porous_forward.add_impulse(index=81, ratio=0.72)
+    porous_forward.add_impulse(index=79, ratio=0.35)
+    porous_forward.add_impulse(index=84, ratio=0.65)
+    x2, t2, U2, h2, k2 = porous_forward.forward_euler(neumann=True)
+    plot_solution(x2, t2, U2, txt='Forward-Euler with Neumann boundary conditions', azim=-30)
+
+    porous_backward = PorousMediumEquation(m=1, f=initial3, g1=boundary111, g2=boundary222, M=100, N=700, T_low=0.01, T_high=2.01, X_low=-2, X_high=2)
+    porous_backward.add_impulse(index=81, ratio=0.72)
+    porous_backward.add_impulse(index=79, ratio=0.35)
+    porous_backward.add_impulse(index=84, ratio=0.65)
     x2, t2, U2, h2, k2 = porous_backward.backward_euler(neumann=True)
     plot_solution(x2, t2, U2, txt='Backward-Euler with Neumann boundary conditions', azim=-30)
 
